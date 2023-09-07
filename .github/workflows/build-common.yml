@@ -8,7 +8,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - name: 
+        uses: actions/checkout@v3
 
       - name: 同步源码
         run: |
@@ -30,27 +31,19 @@ jobs:
           LTO=thin BUILD_CONFIG=common/build.config.gki.aarch64 build/build.sh
 
       - name: 处理编译结果
-        id: prepareArtifacts
         run: |
           OUTDIR=android-kernel/out/android12-5.10/dist
-          mkdir output
-          cp $OUTDIR/Image ./output/
-          cp $OUTDIR/Image.lz4 ./output/
           git clone https://github.com/Kernel-SU/AnyKernel3
           rm -rf ./AnyKernel3/.git
           cp $OUTDIR/Image ./AnyKernel3/
-
-      - name: 上传Image
-        uses: actions/upload-artifact@v3
-        with:
-          name: Image-common
-          path: ./output/*
+          cd ./AnyKernel3/
+          zip -r AnyKernel3.zip .
 
       - name: 上传AnyKernel3
         uses: actions/upload-artifact@v3
         with:
-          name: AnyKernel3-common
-          path: ./AnyKernel3/*
+          name: AnyKernel3.zip
+          path: ./AnyKernel3.zip
 
       - name: 删除历史记录
         uses: c-hive/gha-remove-artifacts@v1
