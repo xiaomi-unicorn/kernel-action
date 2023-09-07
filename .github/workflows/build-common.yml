@@ -1,0 +1,59 @@
+name: 谷歌公共内核
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: 编译谷歌公共内核
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: 同步源码
+        run: |
+          echo "Free space:"
+          df -h
+          cd $GITHUB_WORKSPACE
+          sudo apt-get install repo -y
+          mkdir android-kernel && cd android-kernel
+          repo init --depth=1 --u https://android.googlesource.com/kernel/manifest -b common-android12-5.10-2022-03 --repo-rev=v2.16
+          sed -i 's/"android12-5.10-2022-03"/"deprecated\/android12-5.10-2022-03"/g' .repo/manifests/default.xml
+          cat .repo/manifests/default.xml
+          repo --version
+          repo --trace sync -c -j$(nproc --all) --no-tags
+          df -h
+
+      - name: 编译
+        working-directory: android-kernel
+        run: |
+          LTO=thin BUILD_CONFIG=common/build.config.gki.aarch64 build/build.sh
+
+      - name: 处理编译结果
+        id: prepareArtifacts
+        run: |
+          OUTDIR=android-kernel/out/android12-5.10/dist
+          mkdir output
+          cp $OUTDIR/Image ./output/
+          cp $OUTDIR/Image.lz4 ./output/
+          git clone https://github.com/Kernel-SU/AnyKernel3
+          rm -rf ./AnyKernel3/.git
+          cp $OUTDIR/Image ./AnyKernel3/
+
+      - name: 上传Image
+        uses: actions/upload-artifact@v3
+        with:
+          name: Image-common
+          path: ./output/*
+
+      - name: 上传AnyKernel3
+        uses: actions/upload-artifact@v3
+        with:
+          name: AnyKernel3-common
+          path: ./AnyKernel3/*
+
+      - name: 删除历史记录
+        uses: c-hive/gha-remove-artifacts@v1
+        with:
+          age: '2 days' # '<number> <unit>', e.g. 5 days, 2 years, 90 seconds, parsed by Moment.js
+
