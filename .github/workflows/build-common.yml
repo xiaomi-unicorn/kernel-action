@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 
+      - name: checkout
         uses: actions/checkout@v3
 
       - name: 同步源码
@@ -43,7 +43,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: AnyKernel3.zip
-          path: ./AnyKernel3.zip
+          path: AnyKernel3/AnyKernel3.zip
 
       - name: 删除历史记录
         uses: c-hive/gha-remove-artifacts@v1
